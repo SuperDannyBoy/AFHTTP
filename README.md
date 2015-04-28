@@ -59,3 +59,9 @@ AFHTTP
 ```objective-c
 - (void)cancelAllRequest
 ```
+
+<i class="icon-refresh"></i> 使用到的第三方框架
+-----------------------------------
+
+ 1. [SVProgressHUD](https://github.com/TransitApp/SVProgressHUD)
+ 2. [AFNetworking](https://github.com/AFNetworking/AFNetworking)
