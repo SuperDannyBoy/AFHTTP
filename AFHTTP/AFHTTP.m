@@ -16,7 +16,7 @@
 @interface AFHTTP ()
 
 @property (readonly, nonatomic) AFHTTPRequestOperationManager *manager;
-///存放请求信息字典（eg.@{@"AFNetWorking_UserInfoKey":@"http://1.gkgm.sinaapp.com/?s=/Home/Ypages/index"}）
+///存放请求信息字典（eg.@{@"AFNetWorking_UserInfoKey":@"xxxxxx"}）
 @property (strong, nonatomic) NSDictionary *userInfoDic;
 
 @end

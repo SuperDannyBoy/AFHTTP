@@ -41,7 +41,7 @@ typedef void(^RequestFailure)(AFHTTPRequestOperation *operation, NSError *error)
  *  @param url         baseURL
  *  @param parameters  参数
  *  @param dataDic     默认传nil; 如果是上传文件，则传包括二进制数据在内的字典（eg:@{@"data":@"xxxxxxx", @"key":@"file", @"type":@"png"}）
- *  @param userInfo    要取消的请求信息（eg.@{@"AFNetWorking_UserInfoKey":@"http://1.gkgm.sinaapp.com/?s=/Home/Ypages/index"}）
+ *  @param userInfo    要取消的请求信息（eg.@{@"AFNetWorking_UserInfoKey":@"xxxxx"}）
  *  @param requestType 请求类型
  *  @param isShow      是否显示网络提示框
  *  @param success     成功Block
@@ -59,7 +59,7 @@ typedef void(^RequestFailure)(AFHTTPRequestOperation *operation, NSError *error)
 /**
  *  取消特定请求
  *
- *  @param dic 要取消的请求信息（eg.@{@"AFNetWorking_UserInfoKey":@"http://1.gkgm.sinaapp.com/?s=/Home/Ypages/index"}）
+ *  @param dic 要取消的请求信息（eg.@{@"AFNetWorking_UserInfoKey":@"xxxxx"}）
  */
 - (void)cancelRequestWithUserInfo:(NSDictionary *)dic;
 
