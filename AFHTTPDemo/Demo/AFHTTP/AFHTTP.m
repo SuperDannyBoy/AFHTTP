@@ -8,6 +8,13 @@
 
 #import "AFHTTP.h"
 #import "SVProgressHUD.h"
+#import "NSString+Dir.h"
+
+#import <SystemConfiguration/SCNetworkReachability.h>
+#import <netdb.h>
+#import <sys/socket.h>
+#import <netinet/in.h>
+#import <arpa/inet.h>
 
 
 @interface AFHTTP ()
@@ -39,8 +46,33 @@
     return http;
 }
 
-#pragma mark - 检测网络状态
-+ (BOOL)checkNetWorkStatus{
+#pragma mark - 检测网络状态可達性
++ (BOOL)checkNetWorkStatus {
+    struct sockaddr_in zeroAddress;
+    bzero(&zeroAddress, sizeof(zeroAddress));
+    zeroAddress.sin_len = sizeof(zeroAddress);
+    zeroAddress.sin_family = AF_INET;
+    
+    // Recover reachability flags
+    SCNetworkReachabilityRef defaultRouteReachability = SCNetworkReachabilityCreateWithAddress(NULL, (struct sockaddr *)&zeroAddress);
+    SCNetworkReachabilityFlags flags;
+    
+    BOOL didRetrieveFlags = SCNetworkReachabilityGetFlags(defaultRouteReachability, &flags);
+    //    CFRelease(defaultRouteReachability);
+    
+    if (!didRetrieveFlags)
+    {
+        return NO;
+    }
+    
+    BOOL isReachable = flags & kSCNetworkFlagsReachable;
+    BOOL needsConnection = flags & kSCNetworkFlagsConnectionRequired;
+    
+    return (isReachable && !needsConnection) ? YES : NO;
+}
+
+#pragma mark - 開啟网络状态監聽
++ (void)openNetWorkStatus{
     
     /**
      *  AFNetworkReachabilityStatusUnknown          = -1,  // 未知
@@ -48,23 +80,39 @@
      *  AFNetworkReachabilityStatusReachableViaWWAN = 1,   // 3G
      *  AFNetworkReachabilityStatusReachableViaWiFi = 2,   // 局域网络Wifi
      */
-    // 如果要检测网络状态的变化, 必须要用检测管理器的单例startMoitoring
     
+    // 如果要检测网络状态的变化, 必须要用检测管理器的单例startMoitoring
     [[AFNetworkReachabilityManager sharedManager] startMonitoring];
     // 检测网络连接的单例,网络变化时的回调方法
     [[AFNetworkReachabilityManager sharedManager] setReachabilityStatusChangeBlock:^(AFNetworkReachabilityStatus status) {
+        /*
         if(status == AFNetworkReachabilityStatusNotReachable || status == AFNetworkReachabilityStatusUnknown){
             
             DLog(@"网络连接已断开，请检查您的网络！");
             
             return ;
         }
+         */
+        switch (status) {
+            case AFNetworkReachabilityStatusNotReachable:{
+                DLog(@"网络不通");
+                [SVProgressHUD showErrorWithStatus:@"当前网络不可用"];
+                break;
+            }
+            case AFNetworkReachabilityStatusReachableViaWiFi:{
+                DLog(@"网络通过WIFI连接");
+                break;
+            }
+                
+            case AFNetworkReachabilityStatusReachableViaWWAN:{
+                DLog(@"网络通过流量连接");
+                //可以在這裡發出一個通知，提示用戶注意流量使用之類的話
+                break;
+            }
+            default:
+                break;
+        }
     }];
-    if ([AFNetworkReachabilityManager sharedManager].isReachable) {
-        return YES;
-    }
-    [SVProgressHUD showErrorWithStatus:@"当前网络不可用"];
-    return NO;
 }
 
 #pragma mark - 为每一个请求添加用户信息（方便取消特定请求使用）
@@ -171,20 +219,23 @@
 SuccessBlock:(RequestSuccess)success
 FailureBlock:(RequestFailure)failure {
     AFHTTPRequestOperation *operation = nil;
-    operation = [_manager GET:url parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        [SVProgressHUD dismiss];
-        if (success) {
-            success(responseObject);
-        }
-    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-        //请求被取消时不弹窗提示
-        if (!operation.cancelled) {
-            [SVProgressHUD showErrorWithStatus:error.localizedDescription];
-            if (failure) {
-                failure(operation, error);
-            }
-        }
-    }];
+    operation = [_manager GET:url
+                   parameters:parameters
+                      success:^(AFHTTPRequestOperation *operation, id responseObject) {
+                          [SVProgressHUD dismiss];
+                          if (success) {
+                              success(responseObject);
+                          }
+                      }
+                      failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+                          //请求被取消时不弹窗提示
+                          if (!operation.cancelled) {
+                              [SVProgressHUD showErrorWithStatus:error.localizedDescription];
+                              if (failure) {
+                                  failure(operation, error);
+                              }
+                          }
+                      }];
     [self addUserInfo:operation];
 }
 
@@ -193,20 +244,23 @@ FailureBlock:(RequestFailure)failure {
 SuccessBlock:(RequestSuccess)success
 FailureBlock:(RequestFailure)failure {
     AFHTTPRequestOperation *operation = nil;
-    operation = [_manager POST:url parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        [SVProgressHUD dismiss];
-        if (success) {
-            success(responseObject);
-        }
-    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-        //请求被取消时不弹窗提示
-        if (!operation.cancelled) {
-            [SVProgressHUD showErrorWithStatus:error.localizedDescription];
-            if (failure) {
-                failure(operation, error);
-            }
-        }
-    }];
+    operation = [_manager POST:url
+                    parameters:parameters
+                       success:^(AFHTTPRequestOperation *operation, id responseObject) {
+                           [SVProgressHUD dismiss];
+                           if (success) {
+                               success(responseObject);
+                           }
+                       }
+                       failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+                           //请求被取消时不弹窗提示
+                           if (!operation.cancelled) {
+                               [SVProgressHUD showErrorWithStatus:error.localizedDescription];
+                               if (failure) {
+                                   failure(operation, error);
+                               }
+                           }
+                       }];
     [self addUserInfo:operation];
 }
 
@@ -221,50 +275,94 @@ fileDictionary:(NSDictionary *)dataDic
     // 设置时间格式
     formatter.dateFormat = @"yyyyMMddHHmmss";
     NSString *str = [formatter stringFromDate:[NSDate date]];
-    NSString *fileName = [NSString stringWithFormat:@"%@.%@", str, [dataDic objectForKey:KK_IMAGE_TYPE]];
+    NSString *fileName = [NSString stringWithFormat:@"%@", str];
     
     AFHTTPRequestOperation *operation = nil;
-    operation = [_manager POST:url parameters:parameters constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
-        /*
-         此方法参数
-         1. 要上传的[二进制数据]
-         2. 上传文件字段（与后台约定好）
-         3. 要保存在服务器上的[文件名]
-         4. 上传文件的[mimeType]
-         */
-        [formData appendPartWithFileData:[dataDic objectForKey:KK_IMAGE_DATA] name:[dataDic objectForKey:KK_UPLOAD_DATA_KEY] fileName:fileName mimeType:@"image/jpeg"];
-    } success:^(AFHTTPRequestOperation *operation,id responseObject) {
-        [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"上传成功", nil)];
-        if (success) {
-            success(responseObject);
-        }
-    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-        //请求被取消时不弹窗提示
-        if (!operation.cancelled) {
-            [SVProgressHUD showErrorWithStatus:error.localizedDescription];
-            if (failure) {
-                failure(operation, error);
-            }
-        }
-    }];
+    operation = [_manager POST:url
+                    parameters:parameters
+     constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
+         /*
+          此方法参数
+          1. 要上传的[二进制数据]
+          2. 上传文件字段（与后台约定好）
+          3. 要保存在服务器上的[文件名]
+          4. 上传文件的[mimeType]（不同的文件mimeType不同，詳情見http://www.iana.org/assignments/media-types/media-types.xhtml）
+          */
+         [formData appendPartWithFileData:[dataDic objectForKey:KK_IMAGE_DATA]
+                                     name:[dataDic objectForKey:KK_UPLOAD_DATA_KEY]
+                                 fileName:fileName
+                                 mimeType:@"image/png"];
+     }
+                       success:^(AFHTTPRequestOperation *operation,id responseObject) {
+                           [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"上传成功", nil)];
+                           if (success) {
+                               success(responseObject);
+                           }
+                       }
+                       failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+                           //请求被取消时不弹窗提示
+                           if (!operation.cancelled) {
+                               [SVProgressHUD showErrorWithStatus:error.localizedDescription];
+                               if (failure) {
+                                   failure(operation, error);
+                               }
+                           }
+                       }];
     [self addUserInfo:operation];
+    
+    [operation setUploadProgressBlock:^(NSUInteger __unused bytesWritten,
+                                        long long totalBytesWritten,
+                                        long long totalBytesExpectedToWrite) {
+        DLog(@"Wrote %f", (CGFloat)totalBytesWritten/totalBytesExpectedToWrite);
+        CGFloat progress = (CGFloat)totalBytesWritten/totalBytesExpectedToWrite;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [SVProgressHUD showProgress:progress maskType:SVProgressHUDMaskTypeBlack];
+        });
+        
+    }];
+    
+//    [operation start];
+    
 }
 
 - (void)download:(NSString *)url
       parameters:(NSDictionary *)parameters
     SuccessBlock:(RequestSuccess)success
     FailureBlock:(RequestFailure)failure {
+    
     NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration defaultSessionConfiguration];
+    
     AFURLSessionManager *manager = [[AFURLSessionManager alloc] initWithSessionConfiguration:configuration];
     
-    NSURL *URL = [NSURL URLWithString:@"http://example.com/download.zip"];
+    [manager setDownloadTaskDidWriteDataBlock:^(NSURLSession *session, NSURLSessionDownloadTask *downloadTask, int64_t bytesWritten, int64_t totalBytesWritten, int64_t totalBytesExpectedToWrite) {
+        DLog(@"Wrote %f", (CGFloat)totalBytesWritten/totalBytesExpectedToWrite);
+        CGFloat progress = (CGFloat)totalBytesWritten/totalBytesExpectedToWrite;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [SVProgressHUD showProgress:progress maskType:SVProgressHUDMaskTypeBlack];
+        });
+    }];
+    
+    NSURL *URL = [NSURL URLWithString:url];
     NSURLRequest *request = [NSURLRequest requestWithURL:URL];
     
     NSURLSessionDownloadTask *downloadTask = [manager downloadTaskWithRequest:request progress:nil destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
         NSURL *documentsDirectoryURL = [[NSFileManager defaultManager] URLForDirectory:NSDocumentDirectory inDomain:NSUserDomainMask appropriateForURL:nil create:NO error:nil];
         return [documentsDirectoryURL URLByAppendingPathComponent:[response suggestedFilename]];
     } completionHandler:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
-        NSLog(@"File downloaded to: %@", filePath);
+        //此处已经在主线程了
+        DLog(@"File downloaded to: %@", filePath);
+        if (error) {
+            [SVProgressHUD showErrorWithStatus:error.localizedDescription];
+            if (failure) {
+                failure(nil, error);
+            }
+        }
+        else {
+            [SVProgressHUD showSuccessWithStatus:@"下载完成"];
+            if (success) {
+                success(response);
+            }
+        }
     }];
     [downloadTask resume];
 }
