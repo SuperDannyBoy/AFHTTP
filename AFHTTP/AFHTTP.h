@@ -41,8 +41,11 @@ typedef void(^RequestFailure)(AFHTTPRequestOperation *operation, NSError *error)
 - (instancetype)init;
 + (AFHTTP *)shareInstanced;
 
-///检测网络状态
+///检测网络可达性
 + (BOOL)checkNetWorkStatus;
+
+///開啟网络状态監聽
++ (void)openNetWorkStatus;
 
 /**
  *  发送请求（POST/GET/UPLOAD/...）
