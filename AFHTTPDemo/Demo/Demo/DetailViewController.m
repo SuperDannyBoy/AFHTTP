@@ -42,26 +42,12 @@
         imageDate = UIImageJPEGRepresentation(img, 1.0);
         fileType = @"jpg";
     }
-    /*
     [[AFHTTP shareInstanced] sendRequest:@"http://example.com/upload"
                               parameters:nil
                           fileDictionary:AFHTTP_FileDic(imageDate, @"file", fileType)
                                 userInfo:AFHTTP_UserInfo(@"http://example.com/upload")
                                 withType:UPLOAD
                                isShowHUD:YES
-                            SuccessBlock:^(id responseObject) {
-                                DLog(@"Success");
-                            }
-                            FailureBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
-                                DLog(@"Failure");
-                            }];
-    */
-    [[AFHTTP shareInstanced] sendRequest:@"http://schat868.net:8500/AnXinService/Upload.action"
-                              parameters:nil
-                          fileDictionary:AFHTTP_FileDic(imageDate, @"myFile", fileType)
-                                userInfo:AFHTTP_UserInfo(@"http://schat868.net:8500/AnXinService/Upload.action")
-                                withType:UPLOAD
-                               isShowHUD:NO
                             SuccessBlock:^(id responseObject) {
                                 DLog(@"Success");
                             }
