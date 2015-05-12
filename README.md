@@ -2,7 +2,7 @@ AFHTTP
 ===================
 
 
-感谢开源精神，感谢我姐OMI，感谢我的队友[tompang](https://github.com/tompang)。不足之处望大家见谅，当然，你可以[Fork](https://github.com/boy736809040/AFHTTP/fork)一个分支来完善我的工程，我将无比的荣欣。
+感谢开源精神，感谢我姐OMI，感谢我的队友。不足之处望大家见谅，当然，你可以[Fork](https://github.com/boy736809040/AFHTTP/fork)一个分支来完善我的工程，我将无比的荣欣。
 
 ----------
 
@@ -47,7 +47,16 @@ AFHTTP
 ```objective-c
 - (void)cancelRequestWithUserInfo:(NSDictionary *)dic
 ```
+#### 暂停特定下载请求
 
+```objective-c
+- (void)suspendWithDescription:(NSDictionary *)dic
+```
+#### 继续特定下载请求
+
+```objective-c
+- (void)resumeWithDescription:(NSDictionary *)dic
+```
 > **参数说明:**
 
 > - **@param dic**
@@ -60,7 +69,7 @@ AFHTTP
 - (void)cancelAllRequest
 ```
 
-<i class="icon-refresh"></i> 使用到的第三方框架
+使用到的第三方框架
 -----------------------------------
 
  1. [SVProgressHUD](https://github.com/TransitApp/SVProgressHUD)
