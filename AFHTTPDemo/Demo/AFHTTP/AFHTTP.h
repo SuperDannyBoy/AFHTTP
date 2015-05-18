@@ -12,10 +12,9 @@
  *  上传文件字典
  */
 
-#define KK_IMAGE_DATA      @"data"
-#define KK_IMAGE_TYPE      @"type"
+#define KK_File_PATH       @"path"
 #define KK_UPLOAD_DATA_KEY @"key"
-#define AFHTTP_FileDic(a,b,c)       @{KK_IMAGE_DATA:a, KK_IMAGE_TYPE:b, KK_UPLOAD_DATA_KEY:c}
+#define AFHTTP_FileDic(a,b)       @{KK_File_PATH:a, KK_UPLOAD_DATA_KEY:b}
 
 
 /**
@@ -25,10 +24,10 @@
 #define AFHTTP_UserInfo(a)              [NSDictionary dictionaryWithObjectsAndKeys:a,UserInfoKey_AFNetWorking,nil]
 
 typedef enum : NSUInteger {
-    GET,
-    POST,
-    UPLOAD,
-    DOWNLOAD,
+    request_Get,
+    request_Post,
+    request_Upload,
+    request_Download,
 } requestType;
 
 typedef void(^RequestSuccess)(id responseObject);
@@ -52,7 +51,7 @@ typedef void(^RequestFailure)(AFHTTPRequestOperation *operation, NSError *error)
  *
  *  @param url         baseURL
  *  @param parameters  参数
- *  @param dataDic     默认传nil; 如果是上传文件，则传包括二进制数据在内的字典（eg:@{@"data":@"xxxxxxx", @"key":@"file", @"type":@"png"}）
+ *  @param dataDic     默认传nil; 如果是上传文件，则传包括文件路径在内的字典（eg:@{@"path":@"xxxxxxx", @"key":@"file"}）
  *  @param userInfo    要取消的请求信息（eg.@{@"AFNetWorking_UserInfoKey":@"xxxxx"}）
  *  @param requestType 请求类型
  *  @param isShow      是否显示网络提示框
@@ -77,6 +76,20 @@ typedef void(^RequestFailure)(AFHTTPRequestOperation *operation, NSError *error)
 
 ///取消所有请求
 - (void)cancelAllRequest;
+
+/**
+ *  暂停下载
+ *
+ *  @param dic 要暂停下载的请求信息（eg.@{@"AFNetWorking_UserInfoKey":@"xxxxx"}）
+ */
+- (void)suspendWithDescription:(NSDictionary *)dic;
+
+/**
+ *  继续下载
+ *
+ *  @param dic 要继续下载的请求信息（eg.@{@"AFNetWorking_UserInfoKey":@"xxxxx"}）
+ */
+- (void)resumeWithDescription:(NSDictionary *)dic;
 
 /**
  *  URL转码

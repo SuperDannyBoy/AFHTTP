@@ -19,9 +19,11 @@
 
 @interface AFHTTP ()
 
-@property (readonly, nonatomic) AFHTTPRequestOperationManager *manager;
+@property (readonly, nonatomic) AFHTTPRequestOperationManager *operationManager;
+@property (readonly, nonatomic) AFURLSessionManager           *sessionManager;
 ///存放请求信息字典（eg.@{@"AFNetWorking_UserInfoKey":@"xxxxxx"}）
-@property (strong, nonatomic) NSDictionary *userInfoDic;
+@property (strong, nonatomic) NSDictionary   *userInfoDic;
+@property (strong, nonatomic) NSMutableArray *downloadTaskArr;
 
 @end
 
@@ -31,8 +33,11 @@
 {
     self = [super init];
     if (self) {
-        _manager = [AFHTTPRequestOperationManager manager];
-        _manager.responseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"application/json", @"text/json", @"text/txt",@"text/html", nil];
+        _operationManager = [AFHTTPRequestOperationManager manager];
+        _operationManager.responseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"application/json", @"text/json", @"text/txt",@"text/html", nil];
+        //
+        NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration defaultSessionConfiguration];
+        _sessionManager = [[AFURLSessionManager alloc] initWithSessionConfiguration:configuration];
     }
     return self;
 }
@@ -121,6 +126,10 @@
     operation.userInfo = _userInfoDic;
 }
 
+- (void)addDownloadDescription:(NSURLSessionDownloadTask *)task {
+    task.taskDescription = _userInfoDic[UserInfoKey_AFNetWorking];
+}
+
 #pragma mark - URL转码
 /**
  *  URL转码
@@ -161,7 +170,7 @@
 - (void)cancelRequestWithUserInfo:(NSDictionary *)dic {
     DLog(@"cancel operation dic == %@",dic);
     //队列里的所有操作
-    NSArray *operationArray = _manager.operationQueue.operations;
+    NSArray *operationArray = _operationManager.operationQueue.operations;
     [operationArray enumerateObjectsUsingBlock:^(id object, NSUInteger index, BOOL *stop){
         
         AFHTTPRequestOperation *operation = (AFHTTPRequestOperation *)object;
@@ -176,7 +185,7 @@
 
 #pragma mark 取消所有请求
 - (void)cancelAllRequest {
-    [_manager.operationQueue cancelAllOperations];
+    [_operationManager.operationQueue cancelAllOperations];
 }
 
 #pragma mark 发送请求
@@ -190,22 +199,22 @@
        FailureBlock:(RequestFailure)failure {
     //判断网络状态
     if ([AFHTTP checkNetWorkStatus]) {
-        _manager.responseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"application/json", @"text/json", @"text/txt",@"text/html", nil];
+        _operationManager.responseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"application/json", @"text/json", @"text/txt",@"text/html", nil];
         _userInfoDic = [NSDictionary dictionaryWithDictionary:userInfo];
         if (isShow) {
             [SVProgressHUD showWithMaskType:SVProgressHUDMaskTypeBlack];
         }
         switch (requestType) {
-            case GET:
+            case request_Get:
                 [self get:[[self class] urlEncode:url] parameters:parameters SuccessBlock:(RequestSuccess)success FailureBlock:(RequestFailure)failure];
                 break;
-            case POST:
+            case request_Post:
                 [self post:[[self class] urlEncode:url] parameters:parameters SuccessBlock:(RequestSuccess)success FailureBlock:(RequestFailure)failure];
                 break;
-            case UPLOAD:
+            case request_Upload:
                 [self upload:[[self class] urlEncode:url] parameters:parameters fileDictionary:dataDic SuccessBlock:(RequestSuccess)success FailureBlock:(RequestFailure)failure];
                 break;
-            case DOWNLOAD:
+            case request_Download:
                 [self download:[[self class] urlEncode:url] parameters:parameters SuccessBlock:(RequestSuccess)success FailureBlock:(RequestFailure)failure];
                 break;
             default:
@@ -219,7 +228,7 @@
 SuccessBlock:(RequestSuccess)success
 FailureBlock:(RequestFailure)failure {
     AFHTTPRequestOperation *operation = nil;
-    operation = [_manager GET:url
+    operation = [_operationManager GET:url
                    parameters:parameters
                       success:^(AFHTTPRequestOperation *operation, id responseObject) {
                           [SVProgressHUD dismiss];
@@ -244,7 +253,7 @@ FailureBlock:(RequestFailure)failure {
 SuccessBlock:(RequestSuccess)success
 FailureBlock:(RequestFailure)failure {
     AFHTTPRequestOperation *operation = nil;
-    operation = [_manager POST:url
+    operation = [_operationManager POST:url
                     parameters:parameters
                        success:^(AFHTTPRequestOperation *operation, id responseObject) {
                            [SVProgressHUD dismiss];
@@ -278,36 +287,42 @@ fileDictionary:(NSDictionary *)dataDic
     NSString *fileName = [NSString stringWithFormat:@"%@", str];
     
     AFHTTPRequestOperation *operation = nil;
-    operation = [_manager POST:url
-                    parameters:parameters
-     constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
-         /*
-          此方法参数
-          1. 要上传的[二进制数据]
-          2. 上传文件字段（与后台约定好）
-          3. 要保存在服务器上的[文件名]
-          4. 上传文件的[mimeType]（不同的文件mimeType不同，詳情見http://www.iana.org/assignments/media-types/media-types.xhtml）
-          */
-         [formData appendPartWithFileData:[dataDic objectForKey:KK_IMAGE_DATA]
-                                     name:[dataDic objectForKey:KK_UPLOAD_DATA_KEY]
-                                 fileName:fileName
-                                 mimeType:@"image/png"];
-     }
-                       success:^(AFHTTPRequestOperation *operation,id responseObject) {
-                           [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"上传成功", nil)];
-                           if (success) {
-                               success(responseObject);
-                           }
-                       }
-                       failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-                           //请求被取消时不弹窗提示
-                           if (!operation.cancelled) {
-                               [SVProgressHUD showErrorWithStatus:error.localizedDescription];
-                               if (failure) {
-                                   failure(operation, error);
-                               }
-                           }
-                       }];
+    operation = [_operationManager POST:url
+                             parameters:parameters
+              constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
+                  /*
+                   此方法参数
+                   1. 要上传的[二进制数据]
+                   2. 上传文件字段（与后台约定好）
+                   3. 要保存在服务器上的[文件名]
+                   4. 上传文件的[mimeType]（不同的文件mimeType不同，詳情見http://www.iana.org/assignments/media-types/media-types.xhtml）
+                   */
+                  
+                  //获取文件类型
+                  NSMutableString *filePath = [NSMutableString stringWithString:[dataDic objectForKey:KK_File_PATH]];
+                  CFStringRef UTI           = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension, (__bridge CFStringRef)[filePath pathExtension], NULL);
+                  CFStringRef MIMEType      = UTTypeCopyPreferredTagWithClass (UTI, kUTTagClassMIMEType);
+                  
+                  [formData appendPartWithFileData:[NSData dataWithContentsOfFile:filePath]
+                                              name:[dataDic objectForKey:KK_UPLOAD_DATA_KEY]
+                                          fileName:fileName
+                                          mimeType:(__bridge NSString *)(MIMEType)];
+              }
+                                success:^(AFHTTPRequestOperation *operation,id responseObject) {
+                                    [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"上传成功", nil)];
+                                    if (success) {
+                                        success(responseObject);
+                                    }
+                                }
+                                failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+                                    //请求被取消时不弹窗提示
+                                    if (!operation.cancelled) {
+                                        [SVProgressHUD showErrorWithStatus:error.localizedDescription];
+                                        if (failure) {
+                                            failure(operation, error);
+                                        }
+                                    }
+                                }];
     [self addUserInfo:operation];
     
     [operation setUploadProgressBlock:^(NSUInteger __unused bytesWritten,
@@ -330,23 +345,33 @@ fileDictionary:(NSDictionary *)dataDic
     SuccessBlock:(RequestSuccess)success
     FailureBlock:(RequestFailure)failure {
     
-    NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration defaultSessionConfiguration];
-    
-    AFURLSessionManager *manager = [[AFURLSessionManager alloc] initWithSessionConfiguration:configuration];
-    
-    [manager setDownloadTaskDidWriteDataBlock:^(NSURLSession *session, NSURLSessionDownloadTask *downloadTask, int64_t bytesWritten, int64_t totalBytesWritten, int64_t totalBytesExpectedToWrite) {
+    [_sessionManager setDownloadTaskDidWriteDataBlock:^(NSURLSession *session, NSURLSessionDownloadTask *downloadTask, int64_t bytesWritten, int64_t totalBytesWritten, int64_t totalBytesExpectedToWrite) {
         DLog(@"Wrote %f", (CGFloat)totalBytesWritten/totalBytesExpectedToWrite);
         CGFloat progress = (CGFloat)totalBytesWritten/totalBytesExpectedToWrite;
         dispatch_async(dispatch_get_main_queue(), ^{
-            [SVProgressHUD showProgress:progress maskType:SVProgressHUDMaskTypeBlack];
+            [SVProgressHUD showProgress:progress maskType:SVProgressHUDMaskTypeNone];
         });
     }];
+    
+    //创建子文件夹
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSString *downloadPath     = [NSString stringWithFormat:@"%@/Download", [NSString documentDir]];
+    if(![fileManager fileExistsAtPath:downloadPath]){//如果不存在,则说明是第一次运行这个程序，那么建立这个文件夹
+        DLog(@"first run");
+        NSError *error;
+        [fileManager createDirectoryAtPath:downloadPath withIntermediateDirectories:YES attributes:nil error:&error];
+        if (error) {
+            DLog(@"%@",error.localizedDescription);
+        }
+        DLog(@"%@",downloadPath);
+    }
     
     NSURL *URL = [NSURL URLWithString:url];
     NSURLRequest *request = [NSURLRequest requestWithURL:URL];
     
-    NSURLSessionDownloadTask *downloadTask = [manager downloadTaskWithRequest:request progress:nil destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
+    NSURLSessionDownloadTask *downloadTask = [_sessionManager downloadTaskWithRequest:request progress:nil destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
         NSURL *documentsDirectoryURL = [[NSFileManager defaultManager] URLForDirectory:NSDocumentDirectory inDomain:NSUserDomainMask appropriateForURL:nil create:NO error:nil];
+//        NSURL *documentsDirectoryURL = [NSURL URLWithString:downloadPath];
         return [documentsDirectoryURL URLByAppendingPathComponent:[response suggestedFilename]];
     } completionHandler:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
         //此处已经在主线程了
@@ -364,7 +389,44 @@ fileDictionary:(NSDictionary *)dataDic
             }
         }
     }];
+    
+    [self addDownloadDescription:downloadTask];
+    
     [downloadTask resume];
+}
+
+#pragma mark - 暂停下载
+- (void)suspendWithDescription:(NSDictionary *)dic {
+    DLog(@"suspend task dic == %@",dic);
+    //队列里的所有操作
+    NSArray *taskArray = _sessionManager.downloadTasks;
+    [taskArray enumerateObjectsUsingBlock:^(id object, NSUInteger index, BOOL *stop){
+        
+        NSURLSessionDownloadTask *task = (NSURLSessionDownloadTask *)object;
+        DLog(@"队列里的所有操作:%@",task.taskDescription);
+        //判断对应的task是否存在
+        if ([task.taskDescription isEqualToString:dic[UserInfoKey_AFNetWorking]]) {
+            DLog(@"suspend task");
+            [task suspend];
+        }
+    }];
+}
+
+#pragma mark - 开始下载
+- (void)resumeWithDescription:(NSDictionary *)dic {
+    DLog(@"resume task dic == %@",dic);
+    //队列里的所有操作
+    NSArray *taskArray = _sessionManager.downloadTasks;
+    [taskArray enumerateObjectsUsingBlock:^(id object, NSUInteger index, BOOL *stop){
+        
+        NSURLSessionDownloadTask *task = (NSURLSessionDownloadTask *)object;
+        DLog(@"队列里的所有操作:%@",task.taskDescription);
+        //判断对应的task是否存在
+        if ([task.taskDescription isEqualToString:dic[UserInfoKey_AFNetWorking]]) {
+            DLog(@"resume task");
+            [task resume];
+        }
+    }];
 }
 
 @end

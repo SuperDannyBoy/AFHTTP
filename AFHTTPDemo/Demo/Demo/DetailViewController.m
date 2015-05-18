@@ -29,22 +29,26 @@
     [btn2 setTitle:@"update" forState:UIControlStateNormal];
     [btn2 addTarget:self action:@selector(Update) forControlEvents:UIControlEventTouchUpInside];
     [self.view addSubview:btn2];
+    
+    UIButton *btn3 = [[UIButton alloc] initWithFrame:CGRectMake((SCREEN_WIDTH-100)/2.0, CGRectGetMaxY(btn2.frame)+100, 100, 40)];
+    btn3.backgroundColor = [UIColor grayColor];
+    [btn3 setTitle:@"suspend" forState:UIControlStateNormal];
+    [btn3 addTarget:self action:@selector(Suspend) forControlEvents:UIControlEventTouchUpInside];
+    [self.view addSubview:btn3];
+    
+    UIButton *btn4 = [[UIButton alloc] initWithFrame:CGRectMake((SCREEN_WIDTH-100)/2.0, CGRectGetMaxY(btn3.frame)+100, 100, 40)];
+    btn4.backgroundColor = [UIColor grayColor];
+    [btn4 setTitle:@"resume" forState:UIControlStateNormal];
+    [btn4 addTarget:self action:@selector(Resume) forControlEvents:UIControlEventTouchUpInside];
+    [self.view addSubview:btn4];
 }
 
 - (void)Update {
-    NSData *imageDate = [NSData data];
-    UIImage *img = [UIImage imageNamed:@"Update.jpg"];
-    NSString *fileType = @"png";
-    if (UIImagePNGRepresentation(img)) {
-        imageDate = UIImagePNGRepresentation(img);
-    }
-    else {
-        imageDate = UIImageJPEGRepresentation(img, 1.0);
-        fileType = @"jpg";
-    }
+    NSString *filePath = [[NSBundle mainBundle] pathForResource:@"Update" ofType:@"jpg"];
+    /*
     [[AFHTTP shareInstanced] sendRequest:@"http://example.com/upload"
                               parameters:nil
-                          fileDictionary:AFHTTP_FileDic(imageDate, @"file", fileType)
+                          fileDictionary:AFHTTP_FileDic(filePath, @"file")
                                 userInfo:AFHTTP_UserInfo(@"http://example.com/upload")
                                 withType:UPLOAD
                                isShowHUD:YES
@@ -54,14 +58,12 @@
                             FailureBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
                                 DLog(@"Failure");
                             }];
-}
-
-- (void)Download {
-    [[AFHTTP shareInstanced] sendRequest:@"http://yinyueshiting.baidu.com/data2/music/121561682/121559722122400128.mp3?xcode=6ebac52c749779abab9902618e14e31143ec81f0f73d4ad3"
+    */
+    [[AFHTTP shareInstanced] sendRequest:@"http://schat868.net:8500/AnXinService/Upload.action"
                               parameters:nil
-                          fileDictionary:nil
-                                userInfo:AFHTTP_UserInfo(@"http://yinyueshiting.baidu.com/data2/music/121561682/121559722122400128.mp3?xcode=6ebac52c749779abab9902618e14e31143ec81f0f73d4ad3")
-                                withType:DOWNLOAD
+                          fileDictionary:AFHTTP_FileDic(filePath, @"myFile")
+                                userInfo:AFHTTP_UserInfo(@"http://schat868.net:8500/AnXinService/Upload.action")
+                                withType:request_Upload
                                isShowHUD:NO
                             SuccessBlock:^(id responseObject) {
                                 DLog(@"Success");
@@ -69,6 +71,29 @@
                             FailureBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
                                 DLog(@"Failure");
                             }];
+}
+
+- (void)Download {
+    [[AFHTTP shareInstanced] sendRequest:@"http://music.baidu.com/data/music/file?link=http://yinyueshiting.baidu.com/data2/music/121561682/121559722122400128.mp3?xcode=78e572d0706d03688ddb2ac4c63c2a5543ec81f0f73d4ad3&song_id=121559722"
+                              parameters:nil
+                          fileDictionary:nil
+                                userInfo:AFHTTP_UserInfo(@"http://music.baidu.com/data/music/file?link=http://yinyueshiting.baidu.com/data2/music/121561682/121559722122400128.mp3?xcode=78e572d0706d03688ddb2ac4c63c2a5543ec81f0f73d4ad3&song_id=121559722")
+                                withType:request_Download
+                               isShowHUD:NO
+                            SuccessBlock:^(id responseObject) {
+                                DLog(@"Success");
+                            }
+                            FailureBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+                                DLog(@"Failure");
+                            }];
+}
+
+- (void)Suspend {
+    [[AFHTTP shareInstanced] suspendWithDescription:AFHTTP_UserInfo(@"http://music.baidu.com/data/music/file?link=http://yinyueshiting.baidu.com/data2/music/121561682/121559722122400128.mp3?xcode=78e572d0706d03688ddb2ac4c63c2a5543ec81f0f73d4ad3&song_id=121559722")];
+}
+
+- (void)Resume {
+    [[AFHTTP shareInstanced] resumeWithDescription:AFHTTP_UserInfo(@"http://music.baidu.com/data/music/file?link=http://yinyueshiting.baidu.com/data2/music/121561682/121559722122400128.mp3?xcode=78e572d0706d03688ddb2ac4c63c2a5543ec81f0f73d4ad3&song_id=121559722")];
 }
 
 - (void)didReceiveMemoryWarning {
