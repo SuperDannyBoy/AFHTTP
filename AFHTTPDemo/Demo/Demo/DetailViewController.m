@@ -45,26 +45,13 @@
 
 - (void)Update {
     NSString *filePath = [[NSBundle mainBundle] pathForResource:@"Update" ofType:@"jpg"];
-    /*
+    
     [[AFHTTP shareInstanced] sendRequest:@"http://example.com/upload"
                               parameters:nil
                           fileDictionary:AFHTTP_FileDic(filePath, @"file")
                                 userInfo:AFHTTP_UserInfo(@"http://example.com/upload")
-                                withType:UPLOAD
-                               isShowHUD:YES
-                            SuccessBlock:^(id responseObject) {
-                                DLog(@"Success");
-                            }
-                            FailureBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
-                                DLog(@"Failure");
-                            }];
-    */
-    [[AFHTTP shareInstanced] sendRequest:@"http://schat868.net:8500/AnXinService/Upload.action"
-                              parameters:nil
-                          fileDictionary:AFHTTP_FileDic(filePath, @"myFile")
-                                userInfo:AFHTTP_UserInfo(@"http://schat868.net:8500/AnXinService/Upload.action")
                                 withType:request_Upload
-                               isShowHUD:NO
+                               isShowHUD:YES
                             SuccessBlock:^(id responseObject) {
                                 DLog(@"Success");
                             }
@@ -74,10 +61,10 @@
 }
 
 - (void)Download {
-    [[AFHTTP shareInstanced] sendRequest:@"http://music.baidu.com/data/music/file?link=http://yinyueshiting.baidu.com/data2/music/121561682/121559722122400128.mp3?xcode=78e572d0706d03688ddb2ac4c63c2a5543ec81f0f73d4ad3&song_id=121559722"
+    [[AFHTTP shareInstanced] sendRequest:@"http://music.baidu.com/data/music/file?link=http://yinyueshiting.baidu.com/data2/music/121561682/1215597221431910861128.mp3?xcode=a41a35a64d9aa8d520b9975ff4796f4f43ec81f0f73d4ad3&song_id=121559722"
                               parameters:nil
                           fileDictionary:nil
-                                userInfo:AFHTTP_UserInfo(@"http://music.baidu.com/data/music/file?link=http://yinyueshiting.baidu.com/data2/music/121561682/121559722122400128.mp3?xcode=78e572d0706d03688ddb2ac4c63c2a5543ec81f0f73d4ad3&song_id=121559722")
+                                userInfo:AFHTTP_UserInfo(@"http://music.baidu.com/data/music/file?link=http://yinyueshiting.baidu.com/data2/music/121561682/1215597221431910861128.mp3?xcode=a41a35a64d9aa8d520b9975ff4796f4f43ec81f0f73d4ad3&song_id=121559722")
                                 withType:request_Download
                                isShowHUD:NO
                             SuccessBlock:^(id responseObject) {
@@ -89,11 +76,11 @@
 }
 
 - (void)Suspend {
-    [[AFHTTP shareInstanced] suspendWithDescription:AFHTTP_UserInfo(@"http://music.baidu.com/data/music/file?link=http://yinyueshiting.baidu.com/data2/music/121561682/121559722122400128.mp3?xcode=78e572d0706d03688ddb2ac4c63c2a5543ec81f0f73d4ad3&song_id=121559722")];
+    [[AFHTTP shareInstanced] suspendWithDescription:AFHTTP_UserInfo(@"http://music.baidu.com/data/music/file?link=http://yinyueshiting.baidu.com/data2/music/121561682/1215597221431910861128.mp3?xcode=a41a35a64d9aa8d520b9975ff4796f4f43ec81f0f73d4ad3&song_id=121559722")];
 }
 
 - (void)Resume {
-    [[AFHTTP shareInstanced] resumeWithDescription:AFHTTP_UserInfo(@"http://music.baidu.com/data/music/file?link=http://yinyueshiting.baidu.com/data2/music/121561682/121559722122400128.mp3?xcode=78e572d0706d03688ddb2ac4c63c2a5543ec81f0f73d4ad3&song_id=121559722")];
+    [[AFHTTP shareInstanced] resumeWithDescription:AFHTTP_UserInfo(@"http://music.baidu.com/data/music/file?link=http://yinyueshiting.baidu.com/data2/music/121561682/1215597221431910861128.mp3?xcode=a41a35a64d9aa8d520b9975ff4796f4f43ec81f0f73d4ad3&song_id=121559722")];
 }
 
 - (void)didReceiveMemoryWarning {
