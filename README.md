@@ -29,7 +29,7 @@ AFHTTP
 > - **@param parameters**
 > 字典形式参数
 > - **@param dataDic**
->  默认传nil; 如果是上传文件，则传包括二进制数据在内的字典eg.@{@"data":@"xxxxxxx", @"key":@"file", @"type":@"png"}
+>  默认传nil; 如果是上传文件，则传包括文件路径在内的字典（eg:@{@"path":@"xxxxxxx", @"key":@"file"}）
 > - **@param userInfo** 
 >  要取消的请求信息 eg.@{@"AFNetWorking_UserInfoKey":@"requestUrl"}
 > - **@param requestType**
