@@ -199,7 +199,7 @@
        FailureBlock:(RequestFailure)failure {
     //判断网络状态
     if ([AFHTTP checkNetWorkStatus]) {
-        _operationManager.responseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"application/json", @"text/json", @"text/txt",@"text/html", nil];
+//        _operationManager.responseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"application/json", @"text/json", @"text/txt",@"text/html", nil];
         _userInfoDic = [NSDictionary dictionaryWithDictionary:userInfo];
         if (isShow) {
             [SVProgressHUD showWithMaskType:SVProgressHUDMaskTypeBlack];
