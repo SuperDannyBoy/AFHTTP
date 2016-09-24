@@ -23,15 +23,15 @@
 #define UserInfoKey_AFNetWorking        @"AFNetWorking_UserInfoKey"
 #define AFHTTP_UserInfo(a)              [NSDictionary dictionaryWithObjectsAndKeys:a,UserInfoKey_AFNetWorking,nil]
 
-typedef enum : NSUInteger {
+typedef NS_ENUM(NSUInteger, HTTPRequestType) {
     request_Get,
     request_Post,
     request_Upload,
     request_Download,
-} requestType;
+};
 
 typedef void(^RequestSuccess)(id responseObject);
-typedef void(^RequestFailure)(AFHTTPRequestOperation *operation, NSError *error);
+typedef void(^RequestFailure)(NSURLSessionDataTask *task, NSError *error);
 
 @class AFHTTP;
 
@@ -62,7 +62,7 @@ typedef void(^RequestFailure)(AFHTTPRequestOperation *operation, NSError *error)
          parameters:(NSDictionary *)parameters
      fileDictionary:(NSDictionary *)dataDic
            userInfo:(NSDictionary *)userInfo
-           withType:(NSUInteger)requestType
+           withType:(HTTPRequestType)requestType
           isShowHUD:(BOOL)isShow
        SuccessBlock:(RequestSuccess)success
        FailureBlock:(RequestFailure)failure;
@@ -99,14 +99,5 @@ typedef void(^RequestFailure)(AFHTTPRequestOperation *operation, NSError *error)
  *  @return 返回转码后URL
  */
 + (NSString *)urlEncode:(NSString *)url;
-
-/**
- *  识别图片格式
- *
- *  @param image 图片
- *
- *  @return 图片的格式（@"png"/@"jpg"）
- */
-+ (NSString *)imageType:(UIImage *)image;
 
 @end

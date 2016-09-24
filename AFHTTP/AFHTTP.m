@@ -3,7 +3,7 @@
 //  网络请求
 //
 //  Created by SuperDanny on 14/12/8.
-//  Copyright (c) 2014年 SuperDanny. All rights reserved.
+//  Copyright (c) 2014年 SuperDanny ( http://SuperDanny.link/ ). All rights reserved.
 //
 
 #import "AFHTTP.h"
