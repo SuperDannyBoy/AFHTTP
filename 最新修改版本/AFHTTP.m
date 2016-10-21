@@ -38,7 +38,7 @@
         _operationManager = [AFHTTPSessionManager manager];
         
         _operationManager.requestSerializer  = [AFHTTPRequestSerializer serializer];
-//        _operationManager.responseSerializer = [AFHTTPResponseSerializer serializer];//如果用这个会出现_NSInlineData类型的返回值，5b5b7b22 50726f69 636f6e75 726c223a
+        //        _operationManager.responseSerializer = [AFHTTPResponseSerializer serializer];//如果用这个会出现_NSInlineData类型的返回值，5b5b7b22 50726f69 636f6e75 726c223a
         AFSecurityPolicy *security        = [AFSecurityPolicy defaultPolicy];
         security.allowInvalidCertificates = YES;
         security.validatesDomainName      = NO;
@@ -69,26 +69,26 @@
     }
     return NO;
     
-//    struct sockaddr_in zeroAddress;
-//    bzero(&zeroAddress, sizeof(zeroAddress));
-//    zeroAddress.sin_len = sizeof(zeroAddress);
-//    zeroAddress.sin_family = AF_INET;
-//    
-//    // Recover reachability flags
-//    SCNetworkReachabilityRef defaultRouteReachability = SCNetworkReachabilityCreateWithAddress(NULL, (struct sockaddr *)&zeroAddress);
-//    SCNetworkReachabilityFlags flags;
-//    
-//    BOOL didRetrieveFlags = SCNetworkReachabilityGetFlags(defaultRouteReachability, &flags);
-//    //    CFRelease(defaultRouteReachability);
-//    
-//    if (!didRetrieveFlags) {
-//        return NO;
-//    }
-//    
-//    BOOL isReachable = flags & kSCNetworkFlagsReachable;
-//    BOOL needsConnection = flags & kSCNetworkFlagsConnectionRequired;
-//    
-//    return (isReachable && !needsConnection) ? YES : NO;
+    //    struct sockaddr_in zeroAddress;
+    //    bzero(&zeroAddress, sizeof(zeroAddress));
+    //    zeroAddress.sin_len = sizeof(zeroAddress);
+    //    zeroAddress.sin_family = AF_INET;
+    //
+    //    // Recover reachability flags
+    //    SCNetworkReachabilityRef defaultRouteReachability = SCNetworkReachabilityCreateWithAddress(NULL, (struct sockaddr *)&zeroAddress);
+    //    SCNetworkReachabilityFlags flags;
+    //
+    //    BOOL didRetrieveFlags = SCNetworkReachabilityGetFlags(defaultRouteReachability, &flags);
+    //    //    CFRelease(defaultRouteReachability);
+    //
+    //    if (!didRetrieveFlags) {
+    //        return NO;
+    //    }
+    //
+    //    BOOL isReachable = flags & kSCNetworkFlagsReachable;
+    //    BOOL needsConnection = flags & kSCNetworkFlagsConnectionRequired;
+    //
+    //    return (isReachable && !needsConnection) ? YES : NO;
 }
 
 #pragma mark - 開啟网络状态監聽
@@ -106,12 +106,12 @@
     // 检测网络连接的单例,网络变化时的回调方法
     [[AFNetworkReachabilityManager sharedManager] setReachabilityStatusChangeBlock:^(AFNetworkReachabilityStatus status) {
         /*
-        if(status == AFNetworkReachabilityStatusNotReachable || status == AFNetworkReachabilityStatusUnknown){
-            
-            DLog(@"网络连接已断开，请检查您的网络！");
-            
-            return ;
-        }
+         if(status == AFNetworkReachabilityStatusNotReachable || status == AFNetworkReachabilityStatusUnknown){
+         
+         DLog(@"网络连接已断开，请检查您的网络！");
+         
+         return ;
+         }
          */
         switch (status) {
             case AFNetworkReachabilityStatusNotReachable:{
@@ -137,8 +137,8 @@
 #pragma mark - 为每一个请求添加用户信息（方便取消特定请求使用）
 - (void)addUserInfo:(NSURLSessionDataTask *)task {
     //为每一个请求添加用户信息（方便取消特定请求使用）
-//    NSHTTPURLResponse *response = (NSHTTPURLResponse *)task.response;
-//    NSDictionary *allHeaders = response.allHeaderFields;
+    //    NSHTTPURLResponse *response = (NSHTTPURLResponse *)task.response;
+    //    NSDictionary *allHeaders = response.allHeaderFields;
     task.taskDescription = _userInfoDic[UserInfoKey_AFNetWorking];
 }
 
@@ -167,7 +167,7 @@
 - (void)cancelRequestWithUserInfo:(NSDictionary *)dic {
     DLog(@"cancel task dic == %@",dic);
     //队列里的所有操作
-    NSArray *operationArray = _operationManager.operationQueue.operations;
+    NSArray *operationArray = _operationManager.dataTasks;
     [operationArray enumerateObjectsUsingBlock:^(id object, NSUInteger index, BOOL *stop){
         
         NSURLSessionDataTask *task = (NSURLSessionDataTask *)object;
@@ -182,7 +182,14 @@
 
 #pragma mark 取消所有请求
 - (void)cancelAllRequest {
-    [_operationManager.operationQueue cancelAllOperations];
+    //队列里的所有操作
+    NSArray *operationArray = _operationManager.tasks;
+    [operationArray enumerateObjectsUsingBlock:^(id object, NSUInteger index, BOOL *stop){
+        NSURLSessionDataTask *task = (NSURLSessionDataTask *)object;
+        DLog(@"队列里的所有操作:%@",task.taskDescription);
+        DLog(@"cancel task");
+        [task cancel];
+    }];
 }
 
 #pragma mark 发送请求
@@ -201,6 +208,11 @@
         if (isShow) {
             [SVProgressHUD setDefaultMaskType:SVProgressHUDMaskTypeClear];
             [SVProgressHUD show];
+            //            [DDGifLoadingView show];
+            //            [DDGifLoadingView setTapDismissBlock:^{
+            //                [self cancelAllRequest];
+            //                [self cancelRequestWithUserInfo:userInfo];
+            //            }];
         }
         switch (requestType) {
             case request_Get:
@@ -231,6 +243,7 @@ FailureBlock:(RequestFailure)failure {
     } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
         [AFHTTP printResponseObject:responseObject interface:task.taskDescription];
         [SVProgressHUD dismissWithDelay:0.1];
+        //        [DDGifLoadingView dismiss];
         if (success) {
             success(responseObject);
         }
@@ -238,6 +251,7 @@ FailureBlock:(RequestFailure)failure {
         DLog(@"网络请求错误：%@", error.localizedDescription);
         //请求被取消时不弹窗提示
         if (task.state != NSURLSessionTaskStateCanceling) {
+            //            [DDGifLoadingView dismiss];
             [SVProgressHUD showErrorWithStatus:error.localizedDescription];
             if (failure) {
                 failure(task, error);
@@ -245,6 +259,7 @@ FailureBlock:(RequestFailure)failure {
         }
     }];
     [self addUserInfo:sectionTask];
+    [sectionTask resume];
 }
 
 - (void)post:(NSString *)url
@@ -257,6 +272,7 @@ FailureBlock:(RequestFailure)failure {
     } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
         [AFHTTP printResponseObject:responseObject interface:task.taskDescription];
         [SVProgressHUD dismissWithDelay:0.1];
+        //        [DDGifLoadingView dismiss];
         if (success) {
             success(responseObject);
         }
@@ -264,6 +280,7 @@ FailureBlock:(RequestFailure)failure {
         DLog(@"网络请求错误：%@", error.localizedDescription);
         //请求被取消时不弹窗提示
         if (task.state != NSURLSessionTaskStateCanceling) {
+            //            [DDGifLoadingView dismiss];
             [SVProgressHUD showErrorWithStatus:error.localizedDescription];
             if (failure) {
                 failure(task, error);
@@ -271,6 +288,7 @@ FailureBlock:(RequestFailure)failure {
         }
     }];
     [self addUserInfo:sectionTask];
+    [sectionTask resume];
 }
 
 - (void)upload:(NSString *)url
@@ -316,6 +334,7 @@ fileDictionary:(NSDictionary *)dataDic
         DLog(@"网络请求错误：%@", error.localizedDescription);
         //请求被取消时不弹窗提示
         if (task.state != NSURLSessionTaskStateCanceling) {
+            //            [DDGifLoadingView dismiss];
             [SVProgressHUD showErrorWithStatus:error.localizedDescription];
             if (failure) {
                 failure(task, error);
@@ -323,7 +342,8 @@ fileDictionary:(NSDictionary *)dataDic
         }
     }];
     [self addUserInfo:sectionTask];
-//    [operation start];
+    [sectionTask resume];
+    //    [operation start];
 }
 
 - (void)download:(NSString *)url
@@ -357,7 +377,7 @@ fileDictionary:(NSDictionary *)dataDic
     
     NSURLSessionDownloadTask *downloadTask = [_sessionManager downloadTaskWithRequest:request progress:nil destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
         NSURL *documentsDirectoryURL = [[NSFileManager defaultManager] URLForDirectory:NSDocumentDirectory inDomain:NSUserDomainMask appropriateForURL:nil create:NO error:nil];
-//        NSURL *documentsDirectoryURL = [NSURL URLWithString:downloadPath];
+        //        NSURL *documentsDirectoryURL = [NSURL URLWithString:downloadPath];
         return [documentsDirectoryURL URLByAppendingPathComponent:[response suggestedFilename]];
     } completionHandler:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
         //此处已经在主线程了
