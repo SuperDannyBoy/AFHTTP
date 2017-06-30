@@ -2,7 +2,7 @@ AFHTTP
 ===================
 
 
-感谢开源精神，不足之处望大家见谅，当然，你可以[Fork](https://github.com/boy736809040/AFHTTP/fork)一个分支来完善我的工程，我将无比的荣欣。
+感谢开源精神，不足之处望大家见谅，当然，你可以[Fork](https://github.com/boy736809040/AFHTTP/fork)一个分支来完善我的工程，我将无比的荣幸。
 
 ----------
 
@@ -65,3 +65,5 @@ AFHTTP
 
  1. [SVProgressHUD](https://github.com/TransitApp/SVProgressHUD)
  2. [AFNetworking](https://github.com/AFNetworking/AFNetworking)
+
+
